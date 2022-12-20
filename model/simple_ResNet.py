@@ -1,3 +1,8 @@
+"""
+该模型的思路是：只做卷积/残差，不做池化，维持(192,192)的大小不变。
+输出为(1,8,192,192)，对dim=1取均值得到最终结果
+"""
+
 import torch
 from torch import nn
 from torch.nn import functional as F
