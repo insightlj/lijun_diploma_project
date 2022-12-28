@@ -1,3 +1,7 @@
+import sys
+sys.path.append("D:\desktop\lijun_diploma_project")
+
+
 from torch import optim, nn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -6,8 +10,8 @@ from data.MyData import MyData
 from model.dilated_ResNet import DRN, Bottleneck, BasicBlock
 from model.simple_ResNet import MyResNet
 
-from srcipts.test import test
-from srcipts.train import train
+from scripts.test import test
+from scripts.train import train
 
 # data preparation
 data_path = '/export/disk1/hujian/cath_database/esm2_3B_targetEmbed.h5'
