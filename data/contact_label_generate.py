@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import torch
 
@@ -39,7 +41,7 @@ def caculator_label(coor):
         label = torch.concat((tmp, tmp2), dim=1)
 
     elif L > 192:
-        a = range(L - 192)
+        a = random.randint(0, L-192)
         b = a + 192
         label = label[a:b, a:b]
 
@@ -48,7 +50,7 @@ def caculator_label(coor):
 
 if __name__ == '__main__':
     # load 10th aa
-    coor = np.load("data\\coor.npy")
+    coor = np.load("data/coor.npy")
     coor = torch.from_numpy(coor)
 
     print(coor.shape)

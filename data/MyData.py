@@ -28,8 +28,13 @@ class MyData(Dataset):
         atten = self.embed_atten[pdb_index]['feature_2D'][0, :, np.where(gap > 0)[0]][:, :, np.where(gap > 0)[0]]
 
         L = coor.shape[0]  # protein的长度
+
+        coor = torch.from_numpy(coor)
+        embed = torch.from_numpy(embed)
+        atten = torch.from_numpy(atten)
+
         input = data_pre(coor, embed, atten)
-        contact_label = caculator_label(torch.from_numpy(coor))
+        contact_label = caculator_label(coor)
 
         return input, contact_label, L
 

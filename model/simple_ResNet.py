@@ -44,18 +44,23 @@ class MyResNet(nn.Module):
     def __init__(self, use_softmax=False):
         super(MyResNet, self).__init__()
         self.use_softmax = use_softmax
+        self.b1 = nn.Sequential(nn.Conv2d(105, 64, kernel_size=3, padding=1), nn.ReLU())
+        self.b2 = nn.Sequential(*resnet_block(64, 64, 2))
+        self.b3 = nn.Sequential(*resnet_block(64, 32, 1))
+        self.b4 = nn.Sequential(*resnet_block(32, 32, 2))
+        self.b5 = nn.Sequential(*resnet_block(32, 16, 1))
+        self.b6 = nn.Sequential(*resnet_block(16, 8, 1))
+
+        self.net = nn.Sequential(self.b1, self.b2, self.b3, self.b4, self.b5, self.b6)
 
     def forward(self, X):
-        b1 = nn.Sequential(nn.Conv2d(41, 64, kernel_size=3, padding=1), nn.ReLU())
-        b2 = nn.Sequential(*resnet_block(64, 64, 2))
-        b3 = nn.Sequential(*resnet_block(64, 32, 1))
-        b4 = nn.Sequential(*resnet_block(32, 32, 2))
-        b5 = nn.Sequential(*resnet_block(32, 16, 1))
-        b6 = nn.Sequential(*resnet_block(16, 8, 1))
 
-        net = nn.Sequential(b1, b2, b3, b4, b5, b6)
-
-        Y = net(X)
+        Y = self.b1(X)
+        Y = self.b2(Y)
+        Y = self.b3(Y)
+        Y = self.b4(Y)
+        Y = self.b5(Y)
+        Y = self.b6(Y)
 
         if self.use_softmax:
             Y = Y.reshape(Y.shape[0], Y.shape[1], -1)
@@ -66,7 +71,7 @@ class MyResNet(nn.Module):
 
 if __name__ == '__main__':
     model = MyResNet()
-    data = torch.randn((1, 41, 192, 192))
+    data = torch.randn((1, 105, 192, 192))
 
     output = model(data)
     print(output)

@@ -1,8 +1,8 @@
 import torch
 
-from main import l
-
 def test(test_dataloader, model, writer):
+    from main import l    
+
     total_test_step = 1
     total_test_loss = 0
     total_test_accuracy = 0

@@ -108,7 +108,7 @@ class DRN(nn.Module):
         self.arch = arch
 
         if arch == 'C':
-            self.conv1 = nn.Conv2d(41, channels[0], kernel_size=7, stride=1,
+            self.conv1 = nn.Conv2d(105, channels[0], kernel_size=7, stride=1,
                                    padding=3, bias=False)
             self.bn1 = BatchNorm(channels[0])
             self.relu = nn.ReLU(inplace=True)
@@ -119,7 +119,7 @@ class DRN(nn.Module):
                 BasicBlock, channels[1], layers[1], stride=2)
         elif arch == 'D':
             self.layer0 = nn.Sequential(
-                nn.Conv2d(41, channels[0], kernel_size=7, stride=1, padding=3,
+                nn.Conv2d(105, channels[0], kernel_size=7, stride=1, padding=3,
                           bias=False),
                 BatchNorm(channels[0]),
                 nn.ReLU(inplace=True)
@@ -273,8 +273,9 @@ if __name__ == '__main__':
                  channels=(64, 64, 64, 128, 256, 512, 512, 512),
                  pool_size=24, arch='C',out_map=False)
 
-    data2 = torch.randn((1, 41, 192, 192))
+    data2 = torch.randn((1, 105, 192, 192))
     output = model2(data2)
     print(output.shape)
 
     vis_model(model2, data2)
+
