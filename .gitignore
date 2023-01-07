@@ -6,8 +6,8 @@ scripts/useless_code/
 scripts/__pycache__/
 
 # 快捷方式
-WinSCP
-Xshell
+WinSCP*
+Xshell*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

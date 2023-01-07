@@ -40,14 +40,12 @@ def resnet_block(input_channels, num_channels, num_residuals):
         blk.append(Residual(input_channels, num_channels))
     return blk
 
-class embed_to_2D():
-    def __init__(self, x):
-
-
-    def forward(self):
-
-
-
+# class embed_to_2D():
+#     def __init__(self, x):
+#
+#
+#     def forward(self):
+#
 
 class MyResNet(nn.Module):
     def __init__(self, num_classes = 2, dim_in = 105, dim_out = 36,
@@ -66,16 +64,20 @@ class MyResNet(nn.Module):
 
         self.net = nn.Sequential(self.b1, self.b2, self.b3)
 
-        self.embed_to_2D = embed_to_2D()
-
+        # self.embed_to_2D = embed_to_2D()
+        self.dim_red = nn.Linear(5120, 64)
 
     def forward(self, X_embed, X_atten):
+        # embed [batch_size, L,L,5120]
+        # atten [batch_size, 41,L,L]
 
-        # =======将X_embed与X_atten结合起来，形成X=======
-        
+        # ===========================================
+        # =========这一块用Self-Attention改写=========
+        # ===========================================
+        X_embed = self.dim_red(X_embed)   # (batch_size,L,L,64)
+        X_embed = torch.permute(X_embed, (0,3,1,2))  # (batch_size,64,L,L)
 
-
-        Y = self.net(X)   # Y: (batch, dim_in, len, len) -> (batch, dim_out, len, len)  dim_in: 105; len: 192
+        Y = self.net(torch.concat((X_embed, X_atten), dim=1))   # Y: (batch, dim_in, len, len) -> (batch, dim_out, len, len)  dim_in: 105; len: 192
         Y = torch.permute(Y, (0,2,3,1))   # Y: (batch, dim_out, len, len) -> (batch, len, len, dim_out)  len: 192
         Y = self.linear(Y)  # Y: (batch, len, len, dim_out) -> (batch, len, len, num_classes)   num_classes: 2
 
@@ -84,11 +86,12 @@ class MyResNet(nn.Module):
 
 if __name__ == '__main__':
     model = MyResNet()
-    data = torch.randn((1, 105, 129, 129))
+    embed = torch.randn((1, 129, 129, 5120))
+    atten = torch.randn((1, 41, 129,129))
 
-    output = model(data)
+    output = model(embed, atten)
     print(output.shape)
 
     # from utils.vis_model import vis_model
-    # vis_model(model, data, filename="ResNet_li")
+    # vis_model(model, (embed, atten), filename="ResNet_li")
 

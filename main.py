@@ -29,9 +29,13 @@ model = MyResNet()
 
 l = torch.nn.CrossEntropyLoss()
 
-logs_name = "/home/rotation3/lijun-diploma/" + "logs_train" + now.strftime("%m%d_%H%M%S")
-writer = SummaryWriter(logs_name)
+epoch_num = 30
 
-trained_model = train(train_dataloader, model, l, writer, use_cuda=True)
+for i in range(epoch_num):
 
-model_filename = save_model_parameters(trained_model, now, filename="ResNet-li")
+    logs_name = "/home/rotation3/lijun-diploma/" + "logs_train" + now.strftime("%m%d_%H%M%S")
+    writer = SummaryWriter(logs_name)
+
+    trained_model = train(train_dataloader, model, l, writer, use_cuda=True)
+
+    model_filename = save_model_parameters(trained_model, now, filename="ResNet-li")
