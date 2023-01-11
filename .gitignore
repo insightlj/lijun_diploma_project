@@ -5,9 +5,6 @@
 scripts/useless_code/
 scripts/__pycache__/
 
-# checkpoint中保存的模型，忽略掉
-model/checkpoint/
-
 # 快捷方式
 WinSCP*
 Xshell*
