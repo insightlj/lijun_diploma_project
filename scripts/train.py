@@ -23,7 +23,7 @@ def train(train_dataloader, model, loss_fn, writer, use_cuda=True):
         pred = model(embed, atten)
 
         loss = loss_fn(pred, contact_label)
-        optimizer = optim.Adam(model.parameters(), lr=1e-4)
+        optimizer = optim.Adam(model.parameters(), lr=5e-4)
 
         optimizer.zero_grad()
         loss.backward()
