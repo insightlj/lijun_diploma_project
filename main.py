@@ -33,12 +33,12 @@ l = torch.nn.CrossEntropyLoss()
 # train
 epoch_num = 10
 for i in range(epoch_num):
-    logs_name = "/home/rotation3/lijun-diploma/logs/train/" + str(epoch_num) + "/" + \
-                "logs_train_" + now.strftime("%m%d_%H%M%S") + "_" + str(epoch_num)
+    logs_name = "/home/rotation3/lijun-diploma/logs/train" + now.strftime("%m%d_%H%M%S") + "/" + str(i) + "/" + \
+                "logs_train_" + now.strftime("%m%d_%H%M%S") + "_" + str(i)
     writer = SummaryWriter(logs_name)
 
-    trained_model = train(train_dataloader, model, l, writer, train_mode=True, use_cuda=True)
-    model_filename = save_model_parameters(trained_model, now, filename="ResNet-li" + "-epoch" + str(epoch_num))
+    trained_model = train(train_dataloader, model, l, writer)
+    model_filename = save_model_parameters(trained_model, now, filename="ResNet-li" + "-epoch" + str(i))
 
 # test
 # test(test_dataloader, model)

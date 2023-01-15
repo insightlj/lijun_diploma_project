@@ -52,7 +52,7 @@ class MyResNet(nn.Module):
         self.block = num_block
         self.num_1d_blocks = num_1d_blocks
 
-        self.relu = nn.LeakyReLU(inplace=True)
+        self.relu = nn.LeakyReLU(inplace=False)
         self.dim_red_1 = nn.Linear(2560, 512)
         self.dim_red_2 = nn.Linear(512, 256)
         self.conv_1d = nn.Conv1d(in_channels=256, out_channels=256, kernel_size=3, padding=1)
@@ -70,7 +70,13 @@ class MyResNet(nn.Module):
     def embed_2_2d(self, embed):
         batch_size = embed.shape[0]
         L = embed.shape[2]
+        # 生成模型结构图; onnx不能接受可变参数
+        # batch_size =1
+        # L = 129
         embed_zero = torch.zeros((batch_size, 256, L, L))
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        embed_zero = embed_zero.to(device)
+
         embed.unsqueeze_(dim=3)  # (batch_size, 256, L) -> (batch_size, 256, L,1)
         embed_1 = embed + embed_zero
         embed_2 = embed_1.transpose(2,3)
@@ -115,6 +121,6 @@ if __name__ == '__main__':
     output = model(embed, atten)
     print(output.shape)
 
-    from utils.vis_model import vis_model
-    vis_model(model, (embed, atten), filename="ResNet_li")
+    # from utils.vis_model import vis_model
+    # vis_model(model, (embed, atten), filename="ResNet_li")
 

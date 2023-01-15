@@ -52,6 +52,6 @@ class MyData(Dataset):
         return embed, atten, contact_label, L
         # embed:[L,2560], atten:[41,L,L], contact_label:[L,L]
 
-   def __len__(self):
+    def __len__(self):
         return len(self.index)
 

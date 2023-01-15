@@ -1,9 +1,7 @@
-# 忽略掉.idea文件夹
 .idea/
-
-# useless_code文件夹为试验代码，忽略掉
-scripts/useless_code/
-scripts/__pycache__/
+.git/
+model/checkpoint/
+*/__pycache__/
 
 # 快捷方式
 WinSCP*

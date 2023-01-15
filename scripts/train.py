@@ -1,18 +1,14 @@
 from torch import optim
 import torch
 
-
 def train(train_dataloader, model, loss_fn, writer, use_cuda=True):
 
     total_train_step = 0
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+
     model.train()
-
-    if use_cuda:
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        model.to(device)
-
-    else:
-        device = torch.device("cpu")
 
     for data in train_dataloader:
         embed, atten, contact_label, L = data
