@@ -40,22 +40,24 @@ def resnet_block(input_channels, num_channels, num_residuals):
         blk.append(Residual(input_channels, num_channels))
     return blk
 
-# class embed_to_2D():
-#     def __init__(self, x):
-#
-#
-#     def forward(self):
-#
-
 class MyResNet(nn.Module):
-    def __init__(self, num_classes = 2, dim_in = 105, dim_out = 36,
-                 resnet_dim = 128, num_block = 8, use_softmax=False):
+    def __init__(self, num_classes = 2, dim_in = 169, dim_out = 36,
+                 resnet_dim = 128, num_block = 8, num_1d_blocks = 8, use_softmax=False):
 
         super(MyResNet, self).__init__()
+
         self.use_softmax = use_softmax
         self.num_classes = num_classes
         self.dim_out = dim_out
         self.block = num_block
+        self.num_1d_blocks = num_1d_blocks
+
+        self.relu = nn.LeakyReLU(inplace=True)
+        self.dim_red_1 = nn.Linear(2560, 512)
+        self.dim_red_2 = nn.Linear(512, 256)
+        self.conv_1d = nn.Conv1d(in_channels=256, out_channels=256, kernel_size=3, padding=1)
+        self.conv_2d = nn.Conv2d(in_channels=512, out_channels=128, kernel_size=3, padding=1)
+
 
         self.b1 = nn.Sequential(nn.Conv2d(dim_in, resnet_dim, kernel_size=3, padding=1), nn.ReLU())   # dim: din_in->resnet_dim
         self.b2 = nn.Sequential(*resnet_block(resnet_dim, resnet_dim, num_block))  # dim: resnet_dim->resnet_dim
@@ -64,34 +66,55 @@ class MyResNet(nn.Module):
 
         self.net = nn.Sequential(self.b1, self.b2, self.b3)
 
-        # self.embed_to_2D = embed_to_2D()
-        self.dim_red = nn.Linear(5120, 64)
+    @staticmethod
+    def embed_2_2d(self, embed):
+        batch_size = embed.shape[0]
+        L = embed.shape[2]
+        embed_zero = torch.zeros((batch_size, 256, L, L))
+        embed.unsqueeze_(dim=3)  # (batch_size, 256, L) -> (batch_size, 256, L,1)
+        embed_1 = embed + embed_zero
+        embed_2 = embed_1.transpose(2,3)
+        embed = torch.concat((embed_1, embed_2), dim=1)  # (batch_size,512 L,L)
 
-    def forward(self, X_embed, X_atten):
-        # embed [batch_size, L,L,5120]
+        return embed
+
+    def forward(self, embed, atten):
+        # embed [batch_size, L, 2560]
         # atten [batch_size, 41,L,L]
 
-        # ===========================================
-        # =========这一块用Self-Attention改写=========
-        # ===========================================
-        X_embed = self.dim_red(X_embed)   # (batch_size,L,L,64)
-        X_embed = torch.permute(X_embed, (0,3,1,2))  # (batch_size,64,L,L)
+        # 将(batch_size,L,2560)降维
+        embed = self.relu(self.dim_red_1(embed))
+        embed = self.dim_red_2(embed) # (batch_size,L,256)
 
-        Y = self.net(torch.concat((X_embed, X_atten), dim=1))   # Y: (batch, dim_in, len, len) -> (batch, dim_out, len, len)  dim_in: 105; len: 192
-        Y = torch.permute(Y, (0,2,3,1))   # Y: (batch, dim_out, len, len) -> (batch, len, len, dim_out)  len: 192
-        Y = self.linear(Y)  # Y: (batch, len, len, dim_out) -> (batch, len, len, num_classes)   num_classes: 2
+        embed = embed.permute(0, 2, 1)  # (batch_size,256,L)
+        for i in range(self.num_1d_blocks):
+            embed = self.conv_1d(embed)  # (batch_size,256,L)
+            embed = self.relu(embed)
+
+        # 2. 将(batch_size, 256, L)转化为(batch_size, 128, L,L)
+        embed = self.embed_2_2d(self,embed=embed)   # (batch_size, 256, L) -> (batch_size, 512, L,L)
+        embed = self.conv_2d(embed)  # (batch_size, 128, L,L)
+
+        Y = self.net(torch.concat((embed, atten), dim=1))
+        # Y: (batch, dim_in, len, len) -> (batch, dim_out, len, len)  dim_in: 169; len: 192
+
+        Y = torch.permute(Y, (0,2,3,1))
+        # Y: (batch, dim_out, len, len) -> (batch, len, len, dim_out)  len: 192
+
+        Y = self.linear(Y)
+        # Y: (batch, len, len, dim_out) -> (batch, len, len, num_classes)   num_classes: 2
 
         return Y.reshape(-1, self.num_classes)
 
 
 if __name__ == '__main__':
     model = MyResNet()
-    embed = torch.randn((1, 129, 129, 5120))
+    embed = torch.randn((1, 129, 2560))
     atten = torch.randn((1, 41, 129,129))
 
     output = model(embed, atten)
     print(output.shape)
 
-    # from utils.vis_model import vis_model
-    # vis_model(model, (embed, atten), filename="ResNet_li")
+    from utils.vis_model import vis_model
+    vis_model(model, (embed, atten), filename="ResNet_li")
 

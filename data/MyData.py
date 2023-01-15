@@ -1,4 +1,5 @@
 import os
+import random
 
 import h5py
 import numpy as np
@@ -6,23 +7,19 @@ import torch
 from torch.utils.data import Dataset
 
 from data.contact_label_generate import caculator_label
-from data.data_pretreat import data_pre
-
 
 class MyData(Dataset):
 
-    def __init__(self, data_path, xyz_path, filename, is_train_data):
+    def __init__(self, data_path, xyz_path, filename, train_mode):
         valid = [x.strip() for x in os.popen('cat '+ filename)]
         self.index = valid
 
-        self.is_train_data = is_train_data
+        self.train_mode = train_mode
 
         self.coor = h5py.File(xyz_path, "r")
         self.embed_atten = h5py.File(data_path, "r")
 
     def __getitem__(self, idx):
-        # 返回值: contact_label, 融合之后的input
-
         pdb_index = self.index[idx]
         gap = self.coor[pdb_index]['gap'][:]
         coor = self.coor[pdb_index]["xyz"][np.where(gap > 0)[0]]  # [L, 4, 3], 其中L是序列长度，4代表四个原子，顺序是CA， C， N和CB
@@ -33,11 +30,28 @@ class MyData(Dataset):
         embed = torch.from_numpy(embed)
         atten = torch.from_numpy(atten)
 
-        embed, atten, a, L = data_pre(embed, atten, self.is_train_data)
-        contact_label = caculator_label(coor, a, self.is_train_data)
+        L = embed.shape[0]
 
-        return embed, atten, contact_label, a, L
+        # 对train data来说，应该将L>192的数据随机采样
+        if self.train_mode and L > 192:
 
-    def __len__(self):
+            a = random.randint(0, L - 193)
+            b = a + 192
+
+            embed = embed[a:b]
+            atten = atten[:, a:b, a:b]
+
+            L = 192
+
+        else:
+            INF = 99999
+            a = INF
+
+        contact_label = caculator_label(coor, a, self.train_mode)
+
+        return embed, atten, contact_label, L
+        # embed:[L,2560], atten:[41,L,L], contact_label:[L,L]
+
+   def __len__(self):
         return len(self.index)
 

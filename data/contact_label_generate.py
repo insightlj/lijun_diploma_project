@@ -24,7 +24,7 @@ def label_from_dist(P):
     return P
 
 
-def caculator_label(coor, a, is_train_data):
+def caculator_label(coor, a, train_mode):
     # 输入为原始坐标数据(L,4,3), 输出为基于CB计算的label(L,L)
 
     coor_CB = coor[:, 3, :]
@@ -32,7 +32,7 @@ def caculator_label(coor, a, is_train_data):
 
     L = label.shape[0]
 
-    if is_train_data and L > 192:
+    if train_mode and L > 192:
         label = label[a:a+192, a:a+192]
 
     label = torch.LongTensor(label.numpy())

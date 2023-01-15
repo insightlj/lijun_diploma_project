@@ -11,8 +11,11 @@ def train(train_dataloader, model, loss_fn, writer, use_cuda=True):
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model.to(device)
 
+    else:
+        device = torch.device("cpu")
+
     for data in train_dataloader:
-        embed, atten, contact_label, L, a = data
+        embed, atten, contact_label, L = data
 
         if use_cuda:
             contact_label = contact_label.to(device)
