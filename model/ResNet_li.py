@@ -6,6 +6,8 @@
 import torch
 from torch import nn
 
+from config import device
+
 class Residual(nn.Module):
     def __init__(self, input_channels, num_channels, kernel_size = 3, strides=1):
         super(Residual, self).__init__()
@@ -74,7 +76,7 @@ class MyResNet(nn.Module):
         # batch_size =1
         # L = 129
         embed_zero = torch.zeros((batch_size, 256, L, L))
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
         embed_zero = embed_zero.to(device)
 
         embed.unsqueeze_(dim=3)  # (batch_size, 256, L) -> (batch_size, 256, L,1)
@@ -114,12 +116,28 @@ class MyResNet(nn.Module):
 
 
 if __name__ == '__main__':
+    device = torch.device("cuda:0")
+
     model = MyResNet()
-    embed = torch.randn((1, 129, 2560))
-    atten = torch.randn((1, 41, 129,129))
+
+    #
+
+    #
+    # model.apply(weight_init)
+    #
+    # torch.save(model, "random_model_param.pt")
+
+    model.to(device)
+
+    embed = torch.randn((2, 129, 2560))
+    atten = torch.randn((2, 41, 129,129))
+    embed = embed.to(device)
+    atten = atten.to(device)
 
     output = model(embed, atten)
-    print(output.shape)
+    print(output.shape)   # [L*L,dim_out], [129*129,2]
+
+
 
     # from utils.vis_model import vis_model
     # vis_model(model, (embed, atten), filename="ResNet_li")

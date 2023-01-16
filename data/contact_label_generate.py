@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 
 
@@ -36,16 +35,12 @@ def caculator_label(coor, a, train_mode):
         label = label[a:a+192, a:a+192]
 
     label = torch.LongTensor(label.numpy())
+    label = label.reshape(-1)
     return label
 
 
 if __name__ == '__main__':
-    # load 10th aa
-    coor = np.load("data/dataset/coor.npy")
-    coor = torch.from_numpy(coor)
-
-    print(coor.shape)
-
-    # torch.set_printoptions(profile="full")
-    contact_label = caculator_label(coor)
+    L = 100
+    coor = torch.ones((L,4,3))
+    contact_label = caculator_label(coor, a = 12, train_mode=True)
     print(contact_label.shape)

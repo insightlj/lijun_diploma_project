@@ -6,8 +6,8 @@ def vis_model(model, data, filename="DRN"):
 
     from datetime import datetime as dt
     a = dt.now()
-    model_filename = filename + a.strftime("%m%d_%H%M%S") + ".onnx"
-    model_filename = "model/checkpoint/" + model_filename
+    model_filename = filename + "_" + a.strftime("%m%d_%H%M%S") + ".onnx"
+    model_filename = "model/checkpoint/onnx/" + model_filename
 
     torch.onnx.export(
         model,

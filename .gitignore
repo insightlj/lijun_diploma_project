@@ -1,7 +1,14 @@
 .idea/
 .git/
 model/checkpoint/
+logs/
+nohup/
+*.pt
+*.out
+
 */__pycache__/
+__pycache__/
+
 
 # 快捷方式
 WinSCP*

@@ -30,15 +30,24 @@ model = MyResNet()
 
 l = torch.nn.CrossEntropyLoss()
 
-# train
-epoch_num = 10
-for i in range(epoch_num):
-    logs_name = "/home/rotation3/lijun-diploma/logs/train" + now.strftime("%m%d_%H%M%S") + "/" + str(i) + "/" + \
-                "logs_train_" + now.strftime("%m%d_%H%M%S") + "_" + str(i)
-    writer = SummaryWriter(logs_name)
+def net_train():
+    # train
+    epoch_num = 50
+    for i in range(epoch_num):
+        logs_name = "/home/rotation3/lijun-diploma/logs/train" + now.strftime("%m%d_%H%") + "/" + \
+                    "logs_train_" + now.strftime("%m%d_%H%") + "_" + str(i)
+        writer_train = SummaryWriter(logs_name)
 
-    trained_model = train(train_dataloader, model, l, writer)
-    model_filename = save_model_parameters(trained_model, now, filename="ResNet-li" + "-epoch" + str(i))
+        trained_model = train(train_dataloader, model, l, writer_train, learning_rate=1e-4)
+        save_model_parameters(trained_model, now, filename="ResNet-li" + "-epoch-" + str(i))
 
-# test
-# test(test_dataloader, model)
+def net_test():
+    # test
+    logs_name = "/home/rotation3/lijun-diploma/logs/test" + now.strftime("%m%d_%H%M") + "/" + \
+                "logs_test_" + now.strftime("%m%d_%H%M") + "_" + str(i)
+    writer_test = SummaryWriter(logs_name)
+    test(test_dataloader, model, writer = writer_test)
+
+if __name__ == "__main__":
+    net_train()
+    net_test()
