@@ -1,6 +1,6 @@
 """
 该模型的思路是：只做卷积/残差，不做池化，维持(L,L)的大小不变。
-输出为(batch_size,class_num,L,L)
+输出为(batch_size,L,L,class_num),然后reshape成(-1, class_num)的形式
 """
 
 import torch
@@ -8,8 +8,9 @@ from torch import nn
 
 from config import device
 
+
 class Residual(nn.Module):
-    def __init__(self, input_channels, num_channels, kernel_size = 3, strides=1):
+    def __init__(self, input_channels, num_channels, kernel_size=3, strides=1):
         super(Residual, self).__init__()
         self.padding = (kernel_size - 1) // 2
         self.norm1 = nn.InstanceNorm2d(input_channels)
@@ -42,10 +43,10 @@ def resnet_block(input_channels, num_channels, num_residuals):
         blk.append(Residual(input_channels, num_channels))
     return blk
 
-class MyResNet(nn.Module):
-    def __init__(self, num_classes = 2, dim_in = 169, dim_out = 36,
-                 resnet_dim = 128, num_block = 8, num_1d_blocks = 8, use_softmax=False):
 
+class MyResNet(nn.Module):
+    def __init__(self, num_classes=2, dim_in=169, dim_out=36,
+                 resnet_dim=128, num_block=8, num_1d_blocks=8, use_softmax=False):
         super(MyResNet, self).__init__()
 
         self.use_softmax = use_softmax
@@ -60,8 +61,8 @@ class MyResNet(nn.Module):
         self.conv_1d = nn.Conv1d(in_channels=256, out_channels=256, kernel_size=3, padding=1)
         self.conv_2d = nn.Conv2d(in_channels=512, out_channels=128, kernel_size=3, padding=1)
 
-
-        self.b1 = nn.Sequential(nn.Conv2d(dim_in, resnet_dim, kernel_size=3, padding=1), nn.ReLU())   # dim: din_in->resnet_dim
+        self.b1 = nn.Sequential(nn.Conv2d(dim_in, resnet_dim, kernel_size=3, padding=1),
+                                nn.ReLU())  # dim: din_in->resnet_dim
         self.b2 = nn.Sequential(*resnet_block(resnet_dim, resnet_dim, num_block))  # dim: resnet_dim->resnet_dim
         self.b3 = nn.Sequential(*resnet_block(resnet_dim, dim_out, 1))  # dim: resnet_dim -> dim_out
         self.linear = nn.Linear(dim_out, num_classes)  # 将dim_out降维成num_classes，该维度中的每一个值代表在该bin中的概率
@@ -81,7 +82,7 @@ class MyResNet(nn.Module):
 
         embed.unsqueeze_(dim=3)  # (batch_size, 256, L) -> (batch_size, 256, L,1)
         embed_1 = embed + embed_zero
-        embed_2 = embed_1.transpose(2,3)
+        embed_2 = embed_1.transpose(2, 3)
         embed = torch.concat((embed_1, embed_2), dim=1)  # (batch_size,512 L,L)
 
         return embed
@@ -92,7 +93,7 @@ class MyResNet(nn.Module):
 
         # 将(batch_size,L,2560)降维
         embed = self.relu(self.dim_red_1(embed))
-        embed = self.dim_red_2(embed) # (batch_size,L,256)
+        embed = self.dim_red_2(embed)  # (batch_size,L,256)
 
         embed = embed.permute(0, 2, 1)  # (batch_size,256,L)
         for i in range(self.num_1d_blocks):
@@ -100,13 +101,13 @@ class MyResNet(nn.Module):
             embed = self.relu(embed)
 
         # 2. 将(batch_size, 256, L)转化为(batch_size, 128, L,L)
-        embed = self.embed_2_2d(self,embed=embed)   # (batch_size, 256, L) -> (batch_size, 512, L,L)
+        embed = self.embed_2_2d(self, embed=embed)  # (batch_size, 256, L) -> (batch_size, 512, L,L)
         embed = self.conv_2d(embed)  # (batch_size, 128, L,L)
 
         Y = self.net(torch.concat((embed, atten), dim=1))
         # Y: (batch, dim_in, len, len) -> (batch, dim_out, len, len)  dim_in: 169; len: 192
 
-        Y = torch.permute(Y, (0,2,3,1))
+        Y = torch.permute(Y, (0, 2, 3, 1))
         # Y: (batch, dim_out, len, len) -> (batch, len, len, dim_out)  len: 192
 
         Y = self.linear(Y)
@@ -119,26 +120,18 @@ if __name__ == '__main__':
     device = torch.device("cuda:0")
 
     model = MyResNet()
-
-    #
-
-    #
-    # model.apply(weight_init)
-    #
-    # torch.save(model, "random_model_param.pt")
-
     model.to(device)
 
+    # model.apply(weight_init)
+    # torch.save(model, "random_model_param.pt")
+
     embed = torch.randn((2, 129, 2560))
-    atten = torch.randn((2, 41, 129,129))
+    atten = torch.randn((2, 41, 129, 129))
     embed = embed.to(device)
     atten = atten.to(device)
 
     output = model(embed, atten)
-    print(output.shape)   # [L*L,dim_out], [129*129,2]
-
-
+    print(output.shape)  # [L*L,dim_out], [129*129,2]
 
     # from utils.vis_model import vis_model
     # vis_model(model, (embed, atten), filename="ResNet_li")
-

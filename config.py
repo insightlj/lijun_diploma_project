@@ -1,3 +1,7 @@
+# unify device
 import torch
 
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+epoch_num = 20
+loss_fn = torch.nn.CrossEntropyLoss()
+# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")

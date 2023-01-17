@@ -12,3 +12,10 @@ def weight_init(m):
     elif isinstance(m, nn.BatchNorm2d):
         nn.init.constant_(m.weight, 1)
         nn.init.constant_(m.bias, 0)
+
+
+if __name__ == "__main__":
+    from model.ResNet_li import MyResNet
+
+    model = MyResNet()
+    model.apply(weight_init)
