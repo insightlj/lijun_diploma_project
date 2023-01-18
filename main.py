@@ -10,7 +10,7 @@ from scripts.train import train
 from scripts.test import test
 from utils.init_parameters import weight_init
 
-from config import loss_fn as l, epoch_num
+from config import loss_fn as l
 
 data_path = '/export/disk1/hujian/cath_database/esm2_3B_targetEmbed.h5'
 xyz_path = '/export/disk1/hujian/Model/Model510/GAT-OldData/data/xyz.h5'
@@ -27,31 +27,53 @@ test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 model = MyResNet()
 
 
-def net_train(lr=5e-4):
-    for i in range(epoch_num):
-        # logs
-        logs_name = "/home/rotation3/lijun-diploma/logs/train_" + now.strftime("%m%d%H%M") + "/" + str(i)
-        # /home/rotation3/lijun-diploma/logs/train_0117_1440/0/events.out.tfevents.1673836666.omnisky-GPU-201.36473.0
-        writer_train = SummaryWriter(logs_name)
+def net_train(epoch_ID, expir_name=None, lr=5e-4):
 
-        train(train_dataloader, model, l, writer_train, learning_rate=lr)
+    if expir_name:
+        logs_dir_name = expir_name
+        mode_dir_name = expir_name
+    else:
+        logs_dir_name = now.strftime("%m%d%H%M")
+        mode_dir_name = str(epoch_num) + "_epoch" + "_" + now.strftime("%m%d%H%M")
 
-        # model parameters
-        dir = "/home/rotation3/lijun-diploma/model/checkpoint/" + \
-              str(epoch_num) + "_epoch" + "_" + now.strftime("%m%d%H%M") + "/"
-        filename = "epoch_" + str(i) + ".pt"
-        # /home/rotation3/lijun-diploma/model/checkpoint/20_epoch_01171441/epoch_1.pt
+    # logs save path
+    logs_name = "/home/rotation3/lijun-diploma/logs/train_" + logs_dir_name + "/"+ "epoch" + str(epoch_ID)
+    # /home/rotation3/lijun-diploma/logs/train_01171440/0/events.out.tfevents.1673836666.omnisky-GPU-201.36473.0
+    writer_train = SummaryWriter(logs_name)
 
-        if not os.path.exists(dir):
-            os.mkdir(dir)
-        torch.save(model, dir + filename)
+    train(train_dataloader, model, l, writer_train, epoch_ID, learning_rate=lr)
+
+    # model parameters save path
+    dir = "/home/rotation3/lijun-diploma/model/checkpoint/" + mode_dir_name + "/"
+    filename = "epoch" + str(epoch_ID) + ".pt"
+    # /home/rotation3/lijun-diploma/model/checkpoint/20_epoch_01171441/epoch1.pt
+
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+    torch.save(model, dir + filename)
 
 
-def net_test():
-    logs_name = "/home/rotation3/lijun-diploma/logs/test_" + now.strftime("%m%d%H%M") + "/" + str(i)
+def net_test(epoch_ID, expir_name=None):
+
+    if expir_name:
+        logs_dir_name = expir_name
+    else:
+        logs_dir_name = now.strftime("%m%d%H%M")
+
+    logs_name = "/home/rotation3/lijun-diploma/logs/test_" + logs_dir_name + "/" + "epoch" + str(epoch_ID)
     writer_test = SummaryWriter(logs_name)
 
     test(test_dataloader, model, writer=writer_test)
+
+if __name__ == "__main__":
+    now = dt.now()
+    model.apply(weight_init)
+    expir_name = "3_epoch_try_0118"
+    epoch_num = 3
+
+    for epoch in range(epoch_num):
+        net_train(epoch, expir_name)
+        net_test(epoch, expir_name)
 
 
 # if __name__ == "__main__":
@@ -60,6 +82,7 @@ def net_test():
 #     learning_rate_3 = 5e-6
 #
 #     now = dt.now()  # Record the id of each training session
+#     epoch_num = 30
 #     model.apply(weight_init)
 #
 #     for i in range(10):
@@ -75,31 +98,32 @@ def net_test():
 #         i = k + 20
 #         net_train(learning_rate_3)
 #         net_test()
-
-if __name__ == "__main__":
-    now = dt.now()  # Record the id of each training session
-    model.apply(weight_init)
-
-    learning_rate_1 = 5e-4
-    learning_rate_2 = 1e-4
-    learning_rate_3 = 1e-5
-    learning_rate_4 = 1e-6
-
-    for i in range(1):
-        net_train(learning_rate_1)
-        net_test()
-
-    for j in range(5):
-        i = j + 1
-        net_train(learning_rate_2)
-        net_test()
-
-    for k in range(15):
-        i = k + 6
-        net_train(learning_rate_3)
-        net_test()
-
-    for h in range(15):
-        i = h + 21
-        net_train(learning_rate_4)
-        net_test()
+#
+# if __name__ == "__main__":
+#     now = dt.now()  # Record the id of each training session
+#     epoch_num = 36
+#     model.apply(weight_init)
+#
+#     learning_rate_1 = 5e-4
+#     learning_rate_2 = 1e-4
+#     learning_rate_3 = 1e-5
+#     learning_rate_4 = 1e-6
+#
+#     for i in range(1):
+#         net_train(learning_rate_1)
+#         net_test()
+#
+#     for j in range(5):
+#         i = j + 1
+#         net_train(learning_rate_2)
+#         net_test()
+#
+#     for k in range(15):
+#         i = k + 6
+#         net_train(learning_rate_3)
+#         net_test()
+#
+#     for h in range(15):
+#         i = h + 21
+#         net_train(learning_rate_4)
+#         net_test()
